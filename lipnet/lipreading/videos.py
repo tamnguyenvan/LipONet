@@ -2,7 +2,8 @@ import os
 import numpy as np
 from keras import backend as K
 from scipy import ndimage
-from scipy.misc import imresize
+import cv2
+# from scipy.misc import imresize
 import skvideo.io
 import dlib
 from lipnet.lipreading.aligns import Align
@@ -176,8 +177,9 @@ class Video(object):
 
                 normalize_ratio = MOUTH_WIDTH / float(mouth_right - mouth_left)
 
-            new_img_shape = (int(frame.shape[0] * normalize_ratio), int(frame.shape[1] * normalize_ratio))
-            resized_img = imresize(frame, new_img_shape)
+            new_img_shape = (int(frame.shape[1] * normalize_ratio), int(frame.shape[0] * normalize_ratio))
+            # resized_img = imresize(frame, new_img_shape)
+            resized_img = cv2.resize(frame, new_img_shape)
 
             mouth_centroid_norm = mouth_centroid * normalize_ratio
 
@@ -191,9 +193,20 @@ class Video(object):
             mouth_frames.append(mouth_crop_image)
         return mouth_frames
 
-    def get_video_frames(self, path):
-        videogen = skvideo.io.vreader(path)
-        frames = np.array([frame for frame in videogen])
+    def get_video_frames(self, path, max_frames=100):
+        # videogen = skvideo.io.vreader(path)
+        # frames = np.array([frame for frame in videogen])
+        # return frames
+        cap = cv2.VideoCapture(path)
+        frames = []
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            frames.append(frame)
+            if len(frames) == max_frames:
+                break
+        frames = np.array(frames)
         return frames
 
     def set_data(self, frames):
